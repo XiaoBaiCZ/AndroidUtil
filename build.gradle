@@ -1,0 +1,23 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 28
+
+    final version = 0x0001000 //0x 00(大版本) 00（小版本） 000（小改动）
+    final v_name = String.format("v%d.%d.%d", (version >> 20) & 0xff, (version >> 12) & 0xff , version & 0xfff)
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 28
+        versionCode version
+        versionName v_name
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
