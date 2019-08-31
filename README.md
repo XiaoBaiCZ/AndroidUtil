@@ -3,14 +3,17 @@
 
 - MainHandler
 
-- BaseActivity内嵌主线程Handler，变量 **mHandler**
+  主线程Handler
 
-  可重写 **BaseActivity** 的 **handleMessage(IHandlerMessage obj, Message msg)** 函数处理消息
+- ErrorUtil
 
-- bus包，消息总线
+  崩溃日志
+  
+- ProcessUtil
 
-  通过**Bus**类获取总线，实现**Callback**接口，函数**Callback#callback**添加**BusIntercept**注解进行拦截消息&线程处理，发送消息ID为null时，所有Callback接收者都能收到消息
-
+  判断是否App主进程
+  
+  
 
 
 # Apache License
