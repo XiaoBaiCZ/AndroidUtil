@@ -7,9 +7,15 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.RandomAccessFile;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 崩溃日志
@@ -82,16 +88,18 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
     }
 
     /**
-     * 获取所有日志
+     * 获取日志
      * @return 日志集
      */
-    public static List<Error> getLogs(Context context) {
+    public static List<Error> getLogs(Context context, int index, int count) {
         if (context == null)
             throw new NullPointerException();
+        if (index < 0 || count < 0)
+            throw new IllegalStateException();
         List<Error> errors = new ArrayList<>();
         try (
                 SQLiteDatabase db = new ErrorDB(context.getApplicationContext()).getReadableDatabase();
-                Cursor cursor = db.query("error_log", new String[]{"thread", "time", "sys", "model", "msg"}, null, null, null, null, "time desc")
+                Cursor cursor = db.query("error_log", new String[]{"thread", "time", "sys", "model", "msg"}, null, null, null, null, "time desc", String.format("%s, %s", index, count))
         ) {
             Error error;
             while (cursor.moveToNext()) {
@@ -105,6 +113,14 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
             }
         }
         return errors;
+    }
+
+    /**
+     * 获取所有日志
+     * @return 日志集
+     */
+    public static List<Error> getLogs(Context context) {
+        return getLogs(context, 0, Integer.MAX_VALUE);
     }
 
     /**
@@ -141,6 +157,33 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
             throw new NullPointerException();
         try (SQLiteDatabase db = new ErrorDB(context.getApplicationContext()).getReadableDatabase()) {
             db.delete("error_log", null, null);
+        }
+    }
+
+    public static void export(Context context,File path) throws FileNotFoundException {
+        if (path == null)
+            throw new NullPointerException();
+        if (!path.exists()) {
+            if (!path.mkdirs()) {
+                throw new FileNotFoundException();
+            }
+        }
+
+        final StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%s,%s,%s,%s,%s\n", "thread", "time", "sys", "model", "msg"));
+
+        List<Error> logs = getLogs(context);
+
+        for (Error log : logs) {
+            sb.append(String.format(Locale.CHINA, "%s,%tF %tT,%s,%s,%s\n", log.thread, log.time, log.time, log.sys, log.model, log.msg.replace("\n", " ~ ")));
+        }
+
+        final long now = System.currentTimeMillis();
+        File file = new File(path, String.format(Locale.CHINA, "%tF-%tT.csv", now, now));
+        try (final RandomAccessFile out = new RandomAccessFile(file, "rw")) {
+            out.write(sb.toString().getBytes(Charset.forName("GB2312")));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
