@@ -160,7 +160,18 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
         }
     }
 
-    public static void export(Context context,File path) throws FileNotFoundException {
+    /**
+     * 导出全部崩溃记录
+     */
+    public static void export(Context context, File path) throws FileNotFoundException {
+        List<Error> logs = getLogs(context);
+        export(path, logs);
+    }
+
+    /**
+     * 导出指定崩溃记录
+     */
+    public static void export(File path, List<Error> errors) throws FileNotFoundException {
         if (path == null)
             throw new NullPointerException();
         if (!path.exists()) {
@@ -172,9 +183,7 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
         final StringBuilder sb = new StringBuilder();
         sb.append(String.format("%s,%s,%s,%s,%s\n", "thread", "time", "sys", "model", "msg"));
 
-        List<Error> logs = getLogs(context);
-
-        for (Error log : logs) {
+        for (Error log : errors) {
             sb.append(String.format(Locale.CHINA, "%s,%tF %tT,%s,%s,%s\n", log.thread, log.time, log.time, log.sys, log.model, log.msg.replace("\n", " ~ ")));
         }
 
