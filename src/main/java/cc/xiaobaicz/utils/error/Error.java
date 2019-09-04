@@ -13,6 +13,7 @@ public final class Error implements Parcelable {
     public long time;
     public String sys;
     public String model;
+    public String type;
     public String msg;
 
     public Error() {
@@ -23,6 +24,7 @@ public final class Error implements Parcelable {
         time = in.readLong();
         sys = in.readString();
         model = in.readString();
+        type = in.readString();
         msg = in.readString();
     }
 
@@ -49,6 +51,7 @@ public final class Error implements Parcelable {
         dest.writeLong(time);
         dest.writeString(sys);
         dest.writeString(model);
+        dest.writeString(type);
         dest.writeString(msg);
     }
 
@@ -59,7 +62,9 @@ public final class Error implements Parcelable {
                 ", time=" + time +
                 ", sys='" + sys + '\'' +
                 ", model='" + model + '\'' +
+                ", type='" + type + '\'' +
                 ", msg='" + msg + '\'' +
                 '}';
     }
+
 }

@@ -63,6 +63,13 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
         final String model = Build.MODEL;
         final String sys = String.format("Android %s", Build.VERSION.RELEASE);
 
+        final String type;
+        if (e.getCause() != null) {
+            type = e.getCause().getClass().getName();
+        } else {
+            type = e.getClass().getName();
+        }
+
         final String msg;
         ByteArrayOutputStream os = new ByteArrayOutputStream(1024);
         try (PrintStream ps = new PrintStream(os)) {
@@ -76,6 +83,7 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
             values.put("time", time);
             values.put("sys", sys);
             values.put("model", model);
+            values.put("type", type);
             values.put("msg", msg);
             db.beginTransaction();
             try {
@@ -99,7 +107,7 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
         List<Error> errors = new ArrayList<>();
         try (
                 SQLiteDatabase db = new ErrorDB(context.getApplicationContext()).getReadableDatabase();
-                Cursor cursor = db.query("error_log", new String[]{"thread", "time", "sys", "model", "msg"}, null, null, null, null, "time desc", String.format("%s, %s", index, count))
+                Cursor cursor = db.query("error_log", new String[]{"thread", "time", "sys", "model", "type", "msg"}, null, null, null, null, "time desc", String.format("%s, %s", index, count))
         ) {
             Error error;
             while (cursor.moveToNext()) {
@@ -108,7 +116,8 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
                 error.time = cursor.getLong(1);
                 error.sys = cursor.getString(2);
                 error.model = cursor.getString(3);
-                error.msg = cursor.getString(4);
+                error.type = cursor.getString(4);
+                error.msg = cursor.getString(5);
                 errors.add(error);
             }
         }
@@ -132,7 +141,7 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
             throw new NullPointerException();
         try (
                 SQLiteDatabase db = new ErrorDB(context.getApplicationContext()).getReadableDatabase();
-                Cursor cursor = db.query("error_log", new String[]{"thread", "time", "sys", "model", "msg"}, null, null, null, null, "time desc", "1")
+                Cursor cursor = db.query("error_log", new String[]{"thread", "time", "sys", "model", "type", "msg"}, null, null, null, null, "time desc", "1")
         ) {
             Error error;
             while (cursor.moveToNext()) {
@@ -141,7 +150,8 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
                 error.time = cursor.getLong(1);
                 error.sys = cursor.getString(2);
                 error.model = cursor.getString(3);
-                error.msg = cursor.getString(4);
+                error.type = cursor.getString(4);
+                error.msg = cursor.getString(5);
                 return error;
             }
         }
@@ -181,10 +191,10 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
         }
 
         final StringBuilder sb = new StringBuilder();
-        sb.append(String.format("%s,%s,%s,%s,%s\n", "thread", "time", "sys", "model", "msg"));
+        sb.append(String.format("%s,%s,%s,%s,%s,%s\n", "thread", "time", "sys", "model", "type", "msg"));
 
         for (Error log : errors) {
-            sb.append(String.format(Locale.CHINA, "%s,%tF %tT,%s,%s,%s\n", log.thread, log.time, log.time, log.sys, log.model, log.msg.replace("\n", " ~ ")));
+            sb.append(String.format(Locale.CHINA, "%s,%tF %tT,%s,%s,%s,%s\n", log.thread, log.time, log.time, log.sys, log.model, log.type, log.msg.replace("\n", " ~ ")));
         }
 
         final long now = System.currentTimeMillis();

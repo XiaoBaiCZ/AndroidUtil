@@ -34,6 +34,7 @@ final class ErrorDB extends SQLiteOpenHelper {
                 "    `time` integer default 0,\n" +
                 "    `sys` text default null,\n" +
                 "    `model` text default null,\n" +
+                "    `type` text default null,\n" +
                 "    `msg` text default null\n" +
                 ")");
     }
