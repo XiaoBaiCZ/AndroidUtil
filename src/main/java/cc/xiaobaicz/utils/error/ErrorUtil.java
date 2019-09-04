@@ -96,6 +96,35 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
     }
 
     /**
+     * 获取指定类型日志
+     * @return 日志集
+     */
+    public static List<Error> getLogs(Context context, String type, int index, int count) {
+        if (context == null)
+            throw new NullPointerException();
+        if (index < 0 || count < 0)
+            throw new IllegalStateException();
+        List<Error> errors = new ArrayList<>();
+        try (
+                SQLiteDatabase db = new ErrorDB(context.getApplicationContext()).getReadableDatabase();
+                Cursor cursor = db.query("error_log", new String[]{"thread", "time", "sys", "model", "type", "msg"}, "type = ?", new String[]{type}, null, null, "time desc", String.format("%s, %s", index, count))
+        ) {
+            Error error;
+            while (cursor.moveToNext()) {
+                error = new Error();
+                error.thread = cursor.getString(0);
+                error.time = cursor.getLong(1);
+                error.sys = cursor.getString(2);
+                error.model = cursor.getString(3);
+                error.type = cursor.getString(4);
+                error.msg = cursor.getString(5);
+                errors.add(error);
+            }
+        }
+        return errors;
+    }
+
+    /**
      * 获取日志
      * @return 日志集
      */

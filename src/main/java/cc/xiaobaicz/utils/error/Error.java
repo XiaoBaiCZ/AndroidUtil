@@ -59,7 +59,7 @@ public final class Error implements Parcelable {
     public String toString() {
         return "Error{" +
                 "thread='" + thread + '\'' +
-                ", time=" + time +
+                ", time=" + String.format("%tc", time) +
                 ", sys='" + sys + '\'' +
                 ", model='" + model + '\'' +
                 ", type='" + type + '\'' +
