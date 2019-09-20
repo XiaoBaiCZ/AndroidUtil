@@ -14,8 +14,10 @@ import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * 崩溃日志
@@ -26,7 +28,55 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
 
     private static volatile Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
 
+    private final Set<ErrorCallback> CALLBACKS = new HashSet<>();
+
     private ErrorDB mErrorDB;
+
+    private static ErrorUtil sErrorUtil;
+
+    /**
+     * 默认错误接收器
+     */
+    private final ErrorCallback ERROR_CALLBACK = new ErrorCallback() {
+        @Override
+        public void callback(Thread t, Throwable e) {
+            final String tName = t.getName();
+            final long time = System.currentTimeMillis();
+            final String model = Build.MODEL;
+            final String sys = String.format("Android %s", Build.VERSION.RELEASE);
+
+            final String type;
+            if (e.getCause() != null) {
+                type = e.getCause().getClass().getName();
+            } else {
+                type = e.getClass().getName();
+            }
+
+            final String msg;
+            ByteArrayOutputStream os = new ByteArrayOutputStream(1024);
+            try (PrintStream ps = new PrintStream(os)) {
+                e.printStackTrace(ps);
+                msg = os.toString();
+            }
+
+            try (SQLiteDatabase db = mErrorDB.getWritableDatabase()) {
+                ContentValues values = new ContentValues();
+                values.put("thread", tName);
+                values.put("time", time);
+                values.put("sys", sys);
+                values.put("model", model);
+                values.put("type", type);
+                values.put("msg", msg);
+                db.beginTransaction();
+                try {
+                    db.insert("error_log", null, values);
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+            }
+        }
+    };
 
     private ErrorUtil(final Context context) {
         if (context == null)
@@ -37,7 +87,9 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
-        onError(t, e);
+        for (ErrorCallback callback : CALLBACKS) {
+            callback.callback(t, e);
+        }
         uncaughtExceptionHandler.uncaughtException(t, e);
     }
 
@@ -48,51 +100,24 @@ public final class ErrorUtil implements Thread.UncaughtExceptionHandler {
     public static void init(Context context) {
         if (context == null)
             throw new NullPointerException();
-        if (!(uncaughtExceptionHandler instanceof ErrorUtil))
-            Thread.setDefaultUncaughtExceptionHandler(new ErrorUtil(context));
+        if (!(uncaughtExceptionHandler instanceof ErrorUtil)) {
+            if (sErrorUtil != null) {
+                sErrorUtil.mErrorDB.close();
+                sErrorUtil.CALLBACKS.clear();
+            }
+            Thread.setDefaultUncaughtExceptionHandler(sErrorUtil = new ErrorUtil(context));
+            register(sErrorUtil.ERROR_CALLBACK);
+        }
     }
 
     /**
-     * 写入错误日志
-     * @param t 异常线程
-     * @param e 异常信息
+     * 注册监听
+     * @param callback 监听
      */
-    private void onError(Thread t, Throwable e) {
-        final String tName = t.getName();
-        final long time = System.currentTimeMillis();
-        final String model = Build.MODEL;
-        final String sys = String.format("Android %s", Build.VERSION.RELEASE);
-
-        final String type;
-        if (e.getCause() != null) {
-            type = e.getCause().getClass().getName();
-        } else {
-            type = e.getClass().getName();
-        }
-
-        final String msg;
-        ByteArrayOutputStream os = new ByteArrayOutputStream(1024);
-        try (PrintStream ps = new PrintStream(os)) {
-            e.printStackTrace(ps);
-            msg = os.toString();
-        }
-
-        try (SQLiteDatabase db = mErrorDB.getWritableDatabase()) {
-            ContentValues values = new ContentValues();
-            values.put("thread", tName);
-            values.put("time", time);
-            values.put("sys", sys);
-            values.put("model", model);
-            values.put("type", type);
-            values.put("msg", msg);
-            db.beginTransaction();
-            try {
-                db.insert("error_log", null, values);
-                db.setTransactionSuccessful();
-            } finally {
-                db.endTransaction();
-            }
-        }
+    public static void register(ErrorCallback callback) {
+        if (sErrorUtil == null)
+            throw new NullPointerException();
+        sErrorUtil.CALLBACKS.add(callback);
     }
 
     /**
