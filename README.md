@@ -13,7 +13,21 @@
 
   判断是否App主进程
   
-  
+- SystemUiHelper
+
+  系统UI助手，提供状态栏/导航栏操作
+
+~~~java
+SystemUiHelper.get(activity)
+    .setStatusBarColor(0)
+    .transparentStatusBar()
+    .systemUiHeight(new SystemUiAttrCallback() {
+        public void statusBarHeight(int height) {
+        }
+        public void navigationBarHeight(int height) {
+        }
+    });
+~~~
 
 
 # Apache License
