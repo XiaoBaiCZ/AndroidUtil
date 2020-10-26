@@ -1,8 +1,8 @@
-package cc.xiaobaicz.helper.statusbar;
+package cc.xiaobaicz.helper.statusbar
 
-import android.annotation.TargetApi;
-import android.os.Build;
-import android.view.Window;
+import android.annotation.TargetApi
+import android.os.Build
+import android.view.Window
 
 /**
  * 系统UI操作接口
@@ -11,66 +11,66 @@ import android.view.Window;
  * @date 2020/01/14
  */
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-public interface SystemUiAction {
+interface SystemUiAction {
     /**
      * 还原初始状态
      */
-    void revert(Window window);
+    fun revert(window: Window)
 
     /**
      * 修改状态栏颜色
      */
-    void setStatusBarColor(Window window, int color);
+    fun setStatusBarColor(window: Window, color: Int)
 
     /**
      * 修改导航栏颜色
      */
-    void setNavigationBarColor(Window window, int color);
+    fun setNavigationBarColor(window: Window, color: Int)
 
     /**
      * 设置亮色状态栏（ps：黑色前景）
      */
     @TargetApi(Build.VERSION_CODES.M)
-    void setLightStatusBar(Window window);
+    fun setLightStatusBar(window: Window)
 
     /**
      * 设置亮色导航栏（ps：黑色前景）
      */
     @TargetApi(Build.VERSION_CODES.O)
-    void setLightNavigationBar(Window window);
+    fun setLightNavigationBar(window: Window)
 
     /**
      * 隐藏状态栏
      */
-    void hideStatusBar(Window window);
+    fun hideStatusBar(window: Window)
 
     /**
      * 隐藏导航栏
      */
-    void hideNavigationBar(Window window);
+    fun hideNavigationBar(window: Window)
 
     /**
      * 全屏 ps：隐藏状态栏 & 导航栏
      */
-    void fullScreen(Window window);
+    fun fullScreen(window: Window)
 
     /**
      * 透明状态栏
      */
-    void transparentStatusBar(Window window);
+    fun transparentStatusBar(window: Window)
 
     /**
      * 透明导航栏
      */
-    void transparentNavigationBar(Window window);
+    fun transparentNavigationBar(window: Window)
 
     /**
      * 透明全屏 ps：透明状态栏 & 导航栏
      */
-    void transparentScreen(Window window);
+    fun transparentScreen(window: Window)
 
     /**
      * 获取状态栏 & 导航栏高度
      */
-    void systemUiHeight(Window window, SystemUiAttrCallback callback);
+    fun systemUiHeight(window: Window, callback: SystemUiAttrCallback?)
 }
